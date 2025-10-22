@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría MECUN - Representación Profesoral CSU</title>
+    <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --unal-verde: #3EB595;
+            --unal-amarillo: #FFCC29;
+            --unal-negro: #1E1E1E;
+            --unal-gris: #58585A;
+            --unal-blanco: #FFFFFF;
+            --unal-rojo: #E84E3E;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--unal-negro);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--unal-negro) 0%, var(--unal-gris) 100%);
+            color: var(--unal-blanco);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--unal-verde) 0%, var(--unal-amarillo) 100%);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .navigation {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            background: var(--unal-gris);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .nav-button:hover {
+            background: var(--unal-negro);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .nav-button.active {
+            background: var(--unal-verde);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(62, 181, 149, 0.4);
+        }
+
+        .content-section {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: var(--unal-negro);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--unal-verde);
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 1.5rem;
+            color: var(--unal-gris);
+            margin: 30px 0 15px 0;
+            font-weight: 600;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 5px solid var(--unal-verde);
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .alert-card {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+            border-left: 5px solid var(--unal-rojo);
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--unal-verde) 0%, #2ea37f 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(62, 181, 149, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(62, 181, 149, 0.4);
+        }
+
+        .stat-card.alert {
+            background: linear-gradient(135deg, var(--unal-rojo) 0%, #c93e30 100%);
+            box-shadow: 0 6px 20px rgba(232, 78, 62, 0.3);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.95;
+        }
+
+        .chart-container {
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            height: 400px;
+        }
+
+        .diagram-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--unal-verde);
+            margin: 30px 0;
+        }
+
+        .diagram-node {
+            background: var(--unal-verde);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin: 10px;
+            display: inline-block;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(62, 181, 149, 0.3);
+        }
+
+        .diagram-subnode {
+            background: var(--unal-gris);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 8px 0 8px 40px;
+            display: block;
+            font-size: 0.95rem;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .normative-reference {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .normative-title {
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: var(--unal-negro);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .highlight-text {
+            background: var(--unal-amarillo);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .credits-section {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin-top: 40px;
+        }
+
+        .credits-section h3 {
+            color: var(--unal-amarillo);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .credit-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+
+        .credit-label {
+            font-weight: 700;
+            color: var(--unal-verde);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .content-section {
+                padding: 20px;
+            }
+        }
+
+        .footer-note {
+            text-align: center;
+            padding: 20px;
+            color: var(--unal-gris);
+            font-size: 0.9rem;
+            margin-top: 30px;
+        }
+
+        .emphasis-box {
+            background: linear-gradient(135deg, var(--unal-amarillo) 0%, #ffd700 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            box-shadow: 0 5px 20px rgba(255, 204, 41, 0.3);
+            font-weight: 500;
+            color: var(--unal-negro);
+        }
+
+        .violation-badge {
+            display: inline-block;
+            background: var(--unal-rojo);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+
+        .conclusion-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .conclusion-box h4 {
+            color: var(--unal-amarillo);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function Dashboard() {
+            const [activeSection, setActiveSection] = useState('apendice');
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                if (activeSection === 'hallazgo1' && chartRef.current) {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+
+                    const ctx = chartRef.current.getContext('2d');
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Gasto (millones)', 'Participación %', 'Voto Blanco %', 'Costo/Voto (miles)'],
+                            datasets: [{
+                                label: 'Indicadores MECUN',
+                                data: [261.4, 7.2, 24.7, 98.9],
+                                backgroundColor: [
+                                    'rgba(232, 78, 62, 0.7)',
+                                    'rgba(232, 78, 62, 0.7)',
+                                    'rgba(232, 78, 62, 0.7)',
+                                    'rgba(232, 78, 62, 0.7)'
+                                ],
+                                borderColor: 'rgba(232, 78, 62, 1)',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Contraste: Inversión vs. Resultados MECUN Fase I',
+                                    font: {
+                                        size: 18,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                return () => {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+                };
+            }, [activeSection]);
+
+            const sections = {
+                apendice: () => (
+                    <div className="content-section">
+                        <h2 className="section-title">Apéndice: Marco Normativo - Estructura Presupuestal UNAL</h2>
+                        
+                        <div className="emphasis-box">
+                            <strong>⚠️ IMPORTANTE:</strong> Para comprender la auditoría del gasto del MECUN, es fundamental entender primero cómo se estructura legalmente el presupuesto de la Universidad Nacional. Esta clasificación es un <strong>mandato normativo</strong> establecido en el Estatuto Financiero.
+                        </div>
+
+                        <h3 className="section-subtitle">Clasificación Legal del Presupuesto (Acuerdo 153 de 2014 - CSU)</h3>
+
+                        <div className="diagram-container">
+                            <div style={{textAlign: 'center'}}>
+                                <div className="diagram-node">PRESUPUESTO DE GASTOS</div>
+                                <div style={{margin: '20px 0'}}>
+                                    <div className="diagram-subnode">1. GASTOS DE FUNCIONAMIENTO</div>
+                                    <div style={{marginLeft: '80px', fontSize: '0.9rem', color: '#666', padding: '10px'}}>
+                                        → Gastos de Personal<br/>
+                                        → Gastos Generales<br/>
+                                        → Transferencias<br/>
+                                        → Gastos de Operación Comercial
+                                    </div>
+
+                                    <div className="diagram-subnode">2. GASTOS DE INVERSIÓN</div>
+                                    <div style={{marginLeft: '80px', fontSize: '0.9rem', color: '#666', padding: '10px'}}>
+                                        → Proyectos de Inversión<br/>
+                                        → Capital Humano y Estructural<br/>
+                                        → Modernización Institucional
+                                    </div>
+
+                                    <div className="diagram-subnode">3. SERVICIO DE LA DEUDA</div>
+                                    <div style={{marginLeft: '80px', fontSize: '0.9rem', color: '#666', padding: '10px'}}>
+                                        → Amortizaciones<br/>
+                                        → Intereses y Comisiones
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 className="section-subtitle">1. Gastos de Funcionamiento</h3>
+                        <div className="info-card">
+                            <div className="normative-reference">
+                                <div className="normative-title">Definición Normativa (Acuerdo 153 de 2014, Art. 15, Num. 1):</div>
+                                <em>"Son apropiaciones presupuestales para atender los compromisos para actividades misionales, administrativas, técnicas y operativas que se requieren para el funcionamiento de la Universidad Nacional de Colombia."</em>
+                            </div>
+                            <p><strong>Propósito:</strong> Sostener la operación cotidiana de la Universidad. Son recursos para mantener la institución funcionando en el presente.</p>
+                            <p style={{marginTop: '10px'}}><strong>Ejemplos:</strong> Salarios, servicios públicos, mantenimiento rutinario, papelería, viáticos operativos.</p>
+                            <p style={{marginTop: '10px'}}><strong className="highlight-text">Conclusión:</strong> Estos fondos NO son para proyectos de transformación futura.</p>
+                        </div>
+
+                        <h3 className="section-subtitle">2. Gastos de Inversión</h3>
+                        <div className="info-card">
+                            <div className="normative-reference">
+                                <div className="normative-title">Definición Normativa (Acuerdo 153 de 2014, Art. 15, Num. 2):</div>
+                                <em>"Corresponde a toda erogación que efectúa la Universidad para crear, incrementar, desarrollar, modernizar, reconstruir el capital humano, social y estructural y mejorar la capacidad institucional."</em>
+                            </div>
+                            <p><strong>Propósito:</strong> Financiar proyectos estratégicos que transforman la Universidad a largo plazo.</p>
+                            <p style={{marginTop: '10px'}}><strong>Ejemplos:</strong> Construcción, modernización tecnológica, investigación, reformas institucionales.</p>
+                            <p style={{marginTop: '10px'}}><strong className="highlight-text">Conclusión:</strong> El MECUN pertenece INEQUÍVOCAMENTE a esta categoría.</p>
+                        </div>
+
+                        <div className="alert-card">
+                            <h4 style={{color: 'var(--unal-rojo)', marginBottom: '15px'}}>🔴 Principio de Especialización Presupuestal</h4>
+                            <p>La distinción entre Funcionamiento e Inversión <strong>NO es una sugerencia</strong>, sino un <strong>mandato normativo imperativo</strong>.</p>
+                            <p style={{marginTop: '15px'}}><strong>¿Por qué existe?</strong></p>
+                            <ul style={{marginLeft: '20px', marginTop: '10px'}}>
+                                <li>Evita desviación de recursos</li>
+                                <li>Garantiza transparencia</li>
+                                <li>Permite control efectivo del gasto</li>
+                            </ul>
+                        </div>
+
+                        <div className="emphasis-box">
+                            <strong>💡 Punto clave:</strong> Usar recursos de <strong>Funcionamiento</strong> para <strong>Inversión</strong> viola el Estatuto Financiero y la Constitución.
+                        </div>
+                    </div>
+                ),
+                
+                hallazgo1: () => (
+                    <div className="content-section">
+                        <h2 className="section-title">Hallazgo I: Ineficiencia Manifiesta del Gasto</h2>
+                        
+                        <div className="stats-grid">
+                            <div className="stat-card alert">
+                                <div className="stat-number">$261.4M</div>
+                                <div className="stat-label">Gasto Total</div>
+                            </div>
+                            <div className="stat-card alert">
+                                <div className="stat-number">7.2%</div>
+                                <div className="stat-label">Participación Pregrado</div>
+                            </div>
+                            <div className="stat-card alert">
+                                <div className="stat-number">24.7%</div>
+                                <div className="stat-label">Voto en Blanco</div>
+                            </div>
+                            <div className="stat-card alert">
+                                <div className="stat-number">$98,927</div>
+                                <div className="stat-label">Costo por Voto</div>
+                            </div>
+                        </div>
+
+                        <div className="chart-container">
+                            <canvas ref={chartRef}></canvas>
+                        </div>
+
+                        <h3 className="section-subtitle">Desglose de Gastos</h3>
+                        <div className="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th>Valor</th>
+                                        <th>%</th>
+                                        <th>Análisis</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Servicios prof. Manizales</td>
+                                        <td>$59,476,321</td>
+                                        <td>22.8%</td>
+                                        <td>Sin evidencia de impacto</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Aplicativo digital</td>
+                                        <td>$58,500,000</td>
+                                        <td>22.4%</td>
+                                        <td><strong>Método impersonal ineficaz</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Servicios Medellín</td>
+                                        <td>$45,800,000</td>
+                                        <td>17.5%</td>
+                                        <td>Sin evidencia de impacto</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Viáticos CSU/Rectoría</td>
+                                        <td>$34,567,157</td>
+                                        <td>13.2%</td>
+                                        <td><strong>Campaña "top-down" sin confianza</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Otros gastos</td>
+                                        <td>$63,023,000</td>
+                                        <td>24.1%</td>
+                                        <td>Sin especificación</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ),
+                
+                hallazgo2: () => (
+                    <div className="content-section">
+                        <h2 className="section-title">Hallazgo II: Irregularidades Normativas</h2>
+                        
+                        <h3 className="section-subtitle">Violación 1: Principio de Planificación</h3>
+                        <div className="info-card">
+                            <div className="violation-badge">Acuerdo 037/2010</div>
+                            <div className="normative-reference" style={{marginTop: '20px'}}>
+                                <div className="normative-title">Art. 15 - BPUN:</div>
+                                <em>"Todo proyecto de inversión, para su ejecución, deberá estar registrado en el BPUN."</em>
+                            </div>
+                            <div style={{marginTop: '20px', padding: '20px', background: '#fff3cd', borderRadius: '8px'}}>
+                                <p><strong>🚨 Evidencia:</strong> Rectoría admite que el proyecto está "en proceso de formulación" DESPUÉS de gastar $261M.</p>
+                            </div>
+                        </div>
+
+                        <h3 className="section-subtitle">Violación 2: Especialización Presupuestal</h3>
+                        <div className="info-card">
+                            <div className="violation-badge">Acuerdo 153/2014</div>
+                            <div style={{marginTop: '20px', padding: '20px', background: '#f8d7da', borderRadius: '8px'}}>
+                                <p><strong>📍 Análisis:</strong> Usaron fondos de <strong>Funcionamiento</strong> para un proyecto de <strong>Inversión</strong> (reforma estructural).</p>
+                            </div>
+                        </div>
+
+                        <h3 className="section-subtitle">Violación 3: Transparencia Constitucional</h3>
+                        <div className="info-card">
+                            <div className="violation-badge">Art. 209 Constitución</div>
+                            <p>Al eludir el BPUN y fraccionar el gasto, se impidió la supervisión y transparencia.</p>
+                        </div>
+                    </div>
+                ),
+                
+                conclusiones: () => (
+                    <div className="content-section">
+                        <h2 className="section-title">Conclusiones y Recomendaciones</h2>
+                        
+                        <div className="conclusion-box">
+                            <h4>📋 Síntesis</h4>
+                            <p>La auditoría revela dos hallazgos principales que comprometen la <strong>legalidad</strong> y <strong>eficiencia</strong> de la gestión:</p>
+                        </div>
+
+                        <div className="alert-card">
+                            <h4 style={{color: 'var(--unal-rojo)'}}>Hallazgo 1: Ineficacia</h4>
+                            <p>$261M invertidos con participación de solo 7.2% y costo de $98,927 por voto válido.</p>
+                        </div>
+
+                        <div className="alert-card">
+                            <h4 style={{color: 'var(--unal-rojo)'}}>Hallazgo 2: Irregularidades</h4>
+                            <p>Violación de Acuerdos 037/2010, 153/2014 y Art. 209 de la Constitución.</p>
+                        </div>
+
+                        <h3 className="section-subtitle">Recomendaciones</h3>
+                        <div className="info-card">
+                            <p><strong>Interno:</strong> Remitir a Control Interno UNAL</p>
+                        </div>
+                        <div className="info-card">
+                            <p><strong>Externo:</strong> Informar a Procuraduría General</p>
+                        </div>
+                        <div className="info-card">
+                            <p><strong>Normativo:</strong> Solicitar concepto de Oficina Jurídica</p>
+                        </div>
+                    </div>
+                ),
+                
+                fuentes: () => (
+                    <div className="content-section">
+                        <h2 className="section-title">Fuentes y Metodología</h2>
+                        
+                        <h3 className="section-subtitle">Fuentes Documentales</h3>
+                        <div className="info-card">
+                            <p><strong>📄 Oficio N.1-0797-25</strong> - Rectoría UNAL</p>
+                            <p><strong>📊 Informe Estadístico</strong> - N.CSU.1.005.3670-2025-1</p>
+                        </div>
+
+                        <h3 className="section-subtitle">Marco Normativo</h3>
+                        <div className="normative-reference">
+                            <p><strong>Acuerdo 037/2010:</strong> Sistema de Planeación UNAL</p>
+                            <p><strong>Acuerdo 153/2014:</strong> Estatuto Financiero UNAL</p>
+                            <p><strong>Constitución:</strong> Art. 209 - Función Pública</p>
+                        </div>
+
+                        <h3 className="section-subtitle">Referencias Académicas</h3>
+                        <div className="info-card">
+                            <p><strong>Gerber & Green (2000):</strong> Effects of Canvassing on Voter Turnout</p>
+                            <p><strong>Downs (1957):</strong> Economic Theory of Democracy</p>
+                            <p><strong>Hetherington (1998):</strong> Political Relevance of Trust</p>
+                        </div>
+                    </div>
+                ),
+                
+                creditos: () => (
+                    <div className="credits-section">
+                        <h3>Créditos y Atribuciones</h3>
+                        
+                        <div className="credit-item">
+                            <span className="credit-label">📊 Análisis:</span><br/>
+                            Veeduría Normativa - Representación Profesoral CSU/CA/CS Manizales
+                        </div>
+
+                        <div className="credit-item">
+                            <span className="credit-label">📄 Documentos:</span><br/>
+                            Auditoría Ejecución Presupuestaria MECUN Fase I<br/>
+                            Oficio N.1-0797-25 Rectoría UNAL
+                        </div>
+
+                        <div className="credit-item">
+                            <span className="credit-label">⚖️ Normativa:</span><br/>
+                            Acuerdos CSU 037/2010, 153/2014<br/>
+                            Constitución Política Art. 209
+                        </div>
+
+                        <div className="credit-item">
+                            <span className="credit-label">🎨 Diseño:</span><br/>
+                            Manual de Identidad UNAL: <a href="https://identidad.unal.edu.co/" target="_blank" style={{color: 'var(--unal-amarillo)'}}>identidad.unal.edu.co</a><br/>
+                            Colores oficiales: Verde #3EB595, Amarillo #FFCC29
+                        </div>
+
+                        <div className="credit-item" style={{background: 'rgba(255,204,41,0.2)', borderLeft: '4px solid var(--unal-amarillo)'}}>
+                            <span className="credit-label">⚠️ Transparencia:</span><br/>
+                            Veeduría ciudadana de representantes profesorales. No posición oficial UNAL. Datos verificables en fuentes citadas.
+                        </div>
+
+                        <div style={{textAlign: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.2)'}}>
+                            <p style={{fontSize: '0.9rem', opacity: '0.8'}}>
+                                Universidad Nacional - Sede Manizales<br/>
+                                Octubre 2025
+                            </p>
+                        </div>
+                    </div>
+                )
+            };
+
+            return (
+                <div className="dashboard-container">
+                    <div className="header">
+                        <h1>📊 Auditoría MECUN - Fase I</h1>
+                        <div className="subtitle">
+                            Ejecución Presupuestaria y Contraste Normativo
+                        </div>
+                        <div className="subtitle" style={{marginTop: '10px', fontSize: '1rem'}}>
+                            Representación Profesoral CSU • CA • CS Manizales
+                        </div>
+                    </div>
+
+                    <div className="navigation">
+                        <button 
+                            className={`nav-button ${activeSection === 'apendice' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('apendice')}
+                        >
+                            📚 Marco Presupuestal
+                        </button>
+                        <button 
+                            className={`nav-button ${activeSection === 'hallazgo1' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('hallazgo1')}
+                        >
+                            💰 Ineficiencia
+                        </button>
+                        <button 
+                            className={`nav-button ${activeSection === 'hallazgo2' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('hallazgo2')}
+                        >
+                            ⚖️ Irregularidades
+                        </button>
+                        <button 
+                            className={`nav-button ${activeSection === 'conclusiones' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('conclusiones')}
+                        >
+                            📋 Conclusiones
+                        </button>
+                        <button 
+                            className={`nav-button ${activeSection === 'fuentes' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('fuentes')}
+                        >
+                            📖 Fuentes
+                        </button>
+                        <button 
+                            className={`nav-button ${activeSection === 'creditos' ? 'active' : ''}`}
+                            onClick={() => setActiveSection('creditos')}
+                        >
+                            ✨ Créditos
+                        </button>
+                    </div>
+
+                    {sections[activeSection]()}
+
+                    <div className="footer-note">
+                        <p>Universidad Nacional de Colombia - Dashboard Auditoría MECUN</p>
+                        <p>Octubre 2025 • Veeduría Normativa</p>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+</html>
